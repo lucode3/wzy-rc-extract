@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="cuda_kernel">
+      <UniqueIdentifier>{d45f56f4-e37d-420d-b907-05facb978fa7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test">
+      <UniqueIdentifier>{cec4cb74-449d-4dea-ae94-bb502baf5d35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{f05dd5d0-e737-45de-b223-ded88252d81a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{183710d4-f8b7-467a-8422-e41d58b4dc9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\delaunay_mesh">
+      <UniqueIdentifier>{579f9994-903f-4b81-8cc1-e37fa7f22cc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\delaunay_mesh">
+      <UniqueIdentifier>{e48ef25a-72a8-4432-b15d-c44792c4f192}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="vec.cu">
+      <Filter>cuda_kernel</Filter>
+    </CudaCompile>
+    <CudaCompile Include="hello_world.cu">
+      <Filter>cuda_kernel</Filter>
+    </CudaCompile>
+    <CudaCompile Include="mat.cu">
+      <Filter>cuda_kernel</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="test_tool.c">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="Geometry.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Draw.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Point2D.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Segment.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Triangle.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="DelaunayMesh2D.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshNote.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="FindUnionSet.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="Point2D.cpp">
+      <Filter>source\delaunay_mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Segment.cpp">
+      <Filter>source\delaunay_mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>source\delaunay_mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Triangle.cpp">
+      <Filter>source\delaunay_mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>source\delaunay_mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="DelaunayMesh2D.cpp">
+      <Filter>source\delaunay_mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="test.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="Draw.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
