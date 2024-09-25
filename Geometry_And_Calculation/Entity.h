@@ -3,6 +3,7 @@
 
 class Entity {
 public:
+	Entity();
 	Entity(long id);
 	virtual ~Entity();
 public:

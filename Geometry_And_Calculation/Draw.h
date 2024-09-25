@@ -25,17 +25,24 @@
 #pragma once
 #include<unordered_set>
 #include<unordered_map>
+#include<string>
 #include"Point2D.h"
 #include"Segment.h"
+#include"Triangle.h"
 #include "matplotlibcpp.h"
+
 namespace plt = matplotlibcpp;
 
 class Draw {
 public:
 	Draw(int window_x_begin, int window_x_end, int window_y_begin, int window_y_end);
 	~Draw();
-	void plot_points_and_segments(std::unordered_set<Point2D>& points, std::unordered_set<Segment>& segments);
-	void plot_points_and_segments(std::unordered_map<long, Point2D>& points, std::unordered_map<long, Segment>& segments);
+	void plot_triangles(std::map<long, Triangle>& triangles, std::string color);
+	void plot_triangles(std::vector<Triangle>& triangles, std::string color);
+	void plot_triangle(Triangle& triangle);
+	void plot_point(Point2D& p);
+	void plot_segment(Segment& s);
+	void plot_show();
 public:
 	int window_x_begin;
 	int window_x_end;

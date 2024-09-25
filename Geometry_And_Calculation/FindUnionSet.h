@@ -10,6 +10,7 @@ public:
 			parents[i] = i;
 		}
 	}
+	~FindUnionSet(){}
 	int find_parents(int node) {
 		return node == parents[node] ? node : parents[node] = find_parents(parents[node]);
 	}
@@ -35,7 +36,6 @@ public:
 			set_size[parents_1] = 0;
 		}
 	}
-
 	std::unordered_map<int, std::vector<int>> get_all_parts() {
 		std::unordered_map<int, std::vector<int>> res;
 		for (int i = 0; i < set_size.size(); i++) {

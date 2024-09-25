@@ -10,50 +10,88 @@ Draw::~Draw() {
 
 }
 
-void Draw::plot_points_and_segments(std::unordered_set<Point2D>& points, std::unordered_set<Segment>& segments) {
-	std::cout << "points.size = " << points.size() << std::endl;
-	for (auto& it : points) {
-		std::cout << "id: " << it.id << " (" << it.x << " , " << it.y << ")" << std::endl;
-		plt::plot({ it.x }, { it.y }, "ro");  // 'r' 表示红色，'o' 表示点
+void Draw::plot_triangles(std::map<long, Triangle>& triangles, std::string color) {
+	for (auto it = triangles.begin(); it != triangles.end(); it++) {
+		Point2D A = it->second.p1;
+		Point2D B = it->second.p2;
+		Point2D C = it->second.p3;
+		std::vector<double> x1 = { A.x, B.x }; // AB边的x坐标
+		std::vector<double> y1 = { A.y, B.y }; // AB边的y坐标
 
+		std::vector<double> x2 = { B.x, C.x }; // BC边的x坐标
+		std::vector<double> y2 = { B.y, C.y }; // BC边的y坐标
+
+		std::vector<double> x3 = { C.x, A.x }; // CA边的x坐标
+		std::vector<double> y3 = { C.y, A.y }; // CA边的y坐标
+
+		// 绘制三条边
+		plt::plot(x1, y1, color); // 蓝色实线表示边
+		plt::plot(x2, y2, color);
+		plt::plot(x3, y3, color);
 	}
-	std::cout << "segments.size = " << segments.size() << std::endl;
-	for (auto& it : segments) {
-		std::cout << "id: " << it.id << " (" << it.p1.x << " ," << it.p1.y << ")  (" << it.p2.x << "," << it.p2.y << ")" << std::endl;
-		float x1 = it.p1.x;
-		float y1 = it.p1.y;
-		float x2 = it.p2.x;
-		float y2 = it.p2.y;
-		// 绘制每条线段
-		plt::plot({ x1, x2 }, { y1, y2 }, "b-");  // 蓝色线条.
+
+}
+void Draw::plot_triangles(std::vector<Triangle>& triangles, std::string color) {
+	for (auto it : triangles) {
+		Point2D A = it.p1;
+		Point2D B = it.p2;
+		Point2D C = it.p3;
+		std::vector<double> x1 = { A.x, B.x }; // AB边的x坐标
+		std::vector<double> y1 = { A.y, B.y }; // AB边的y坐标
+
+		std::vector<double> x2 = { B.x, C.x }; // BC边的x坐标
+		std::vector<double> y2 = { B.y, C.y }; // BC边的y坐标
+
+		std::vector<double> x3 = { C.x, A.x }; // CA边的x坐标
+		std::vector<double> y3 = { C.y, A.y }; // CA边的y坐标
+
+		// 绘制三条边
+		plt::plot(x1, y1, color); // 蓝色实线表示边
+		plt::plot(x2, y2, color);
+		plt::plot(x3, y3, color);
 	}
-	// 设置图的范围（可选）
-	plt::xlim(this->window_x_begin, this->window_x_end);  // 设置 x 轴范围
-	plt::ylim(this->window_y_begin, this->window_y_end);  // 设置 y 轴范围
-	// 显示绘图
-	plt::show();
 }
 
-void Draw::plot_points_and_segments(std::unordered_map<long, Point2D>& points, std::unordered_map<long, Segment>& segments) {
-	std::cout << "points.size = " << points.size() << std::endl;
-	for (auto it = points.begin(); it != points.end(); it++) {
-		std::cout << "id: " << it->first << " (" << it->second.x << " , " << it->second.y << ")" << std::endl;
-		plt::plot({ it->second.x }, { it->second.y }, "ro");  // 'r' 表示红色，'o' 表示点
+void Draw::plot_point(Point2D& p) {
+	plt::plot({ p.x }, { p.y }, "ro");
+}
+void Draw::plot_segment(Segment& s) {
+	double x1 = s.p1.x;
+	double y1 = s.p1.y;
+	double x2 = s.p2.x;
+	double y2 = s.p2.y;
+	// 绘制每条线段
+	plt::plot({ x1, x2 }, { y1, y2 }, "b-"); 
+}
 
-	}
-	std::cout << "segments.size = " << segments.size() << std::endl;
-	for (auto it = segments.begin(); it != segments.end(); it++) {
-		std::cout << "id: " << it->first << " (" << it->second.p1.x << " ," << it->second.p1.y << ")  (" << it->second.p2.x << "," << it->second.p2.y << ")" << std::endl;
-		float x1 = it->second.p1.x;
-		float y1 = it->second.p1.y;
-		float x2 = it->second.p2.x;
-		float y2 = it->second.p2.y;
-		// 绘制每条线段
-		plt::plot({ x1, x2 }, { y1, y2 }, "b-");  // 蓝色线条.
-	}
-	// 设置图的范围（可选）
-	plt::xlim(this->window_x_begin, this->window_x_end);  // 设置 x 轴范围
-	plt::ylim(this->window_y_begin, this->window_y_end);  // 设置 y 轴范围
-	// 显示绘图
+void Draw::plot_triangle(Triangle& triangle) {
+	Point2D A = triangle.p1;
+	Point2D B = triangle.p2;
+	Point2D C = triangle.p3;
+	std::vector<double> x1 = { A.x, B.x }; // AB边的x坐标
+	std::vector<double> y1 = { A.y, B.y }; // AB边的y坐标
+
+	std::vector<double> x2 = { B.x, C.x }; // BC边的x坐标
+	std::vector<double> y2 = { B.y, C.y }; // BC边的y坐标
+
+	std::vector<double> x3 = { C.x, A.x }; // CA边的x坐标
+	std::vector<double> y3 = { C.y, A.y }; // CA边的y坐标
+
+	// 绘制三条边
+	plt::plot(x1, y1, "g-"); // 蓝色实线表示边
+	plt::plot(x2, y2, "g-");
+	plt::plot(x3, y3, "g-");
+	
+}
+void Draw::plot_show() {
+	//// 设置图的范围（可选）
+	//plt::xlim(this->window_x_begin, this->window_x_end);  // 设置 x 轴范围
+	//plt::ylim(this->window_y_begin, this->window_y_end);  // 设置 y 轴范围
+	//// 显示绘图
+	//plt::show();
+
+
+	// 设置图形显示
+	plt::axis("equal"); // 保持x和y轴的比例相同
 	plt::show();
 }
