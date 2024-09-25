@@ -29,6 +29,30 @@ double DelaunayMesh2D::calculate_angle(const Point2D& A, const Point2D& B, const
 	return cos_theta;
 }
 
+double DelaunayMesh2D::point_to_segment_distance(const Point2D& P, const Point2D& A, const Point2D& B) {
+	// 向量 AB 和 AP
+	double AB_x = B.x - A.x;
+	double AB_y = B.y - A.y;
+	double AP_x = P.x - A.x;
+	double AP_y = P.y - A.y;
+	// 线段 AB 的长度的平方
+	double AB_length_sq = AB_x * AB_x + AB_y * AB_y;
+	// 计算 t = (AP · AB) / (AB · AB)
+	double t = (AP_x * AB_x + AP_y * AB_y) / AB_length_sq;
+	// 判断投影点是否在线段上
+	if (t < 0.0 || t > 1.0) {
+		return -1.0;  // 如果不在 0 到 1 之间，垂足不在线段上
+	}
+	// 投影点的坐标为 A + t * AB
+	double projection_x = A.x + t * AB_x;
+	double projection_y = A.y + t * AB_y;
+	// 计算点 P 到投影点的距离
+	double distance = std::sqrt((P.x - projection_x) * (P.x - projection_x) +
+		(P.y - projection_y) * (P.y - projection_y));
+
+	return distance;
+}
+
 Point2D DelaunayMesh2D::find_line_circle_intersection(Point2D& A, Point2D& B, double r) {
 	double dis_x = B.x - A.x;
 	double dis_y = B.y - A.y;
@@ -661,6 +685,7 @@ Triangle DelaunayMesh2D::add_init_Triangle() {
 	return init_triangle;
 }
 
+
 void DelaunayMesh2D::boundary_subdivision() {
 	add_init_Triangle();
 
@@ -695,3 +720,4 @@ void DelaunayMesh2D::boundary_subdivision() {
 		this->css.insert(s2);
 	}	
 }
+

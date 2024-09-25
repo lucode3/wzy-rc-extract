@@ -44,6 +44,7 @@ public:
 	~DelaunayMesh2D();
 	double cross(const Point2D& a, const Point2D& b, const Point2D& c);
 	double calculate_angle(const Point2D& A, const Point2D& B, const Point2D& C);
+	double point_to_segment_distance(const Point2D& P, const Point2D& A, const Point2D& B);
 	Point2D find_line_circle_intersection(Point2D& A, Point2D& B, double r);
 public:
 	void contraint_normalize(std::vector<std::vector<double>>& cps, std::vector<std::vector<double>>& css);
