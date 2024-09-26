@@ -9,6 +9,7 @@ public:
 	Point2D(const Point2D& other);
 	Point2D& operator=(const Point2D& other);
 	bool operator==(const Point2D& other) const;
+	bool operator!=(const Point2D& other) const;
 	bool operator<(const Point2D& other) const;
 	~Point2D();
 public:

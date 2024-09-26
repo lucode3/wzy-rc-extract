@@ -15,4 +15,6 @@ public:
 	long id;
 	Point2D p1;
 	Point2D p2;
+	Point2D M;
+	double r;
 };

@@ -91,6 +91,7 @@
     <CudaCompile Include="vec.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Arc.h" />
     <ClInclude Include="DelaunayMesh2D.h" />
     <ClInclude Include="Draw.h" />
     <ClInclude Include="Entity.h" />
@@ -104,6 +105,7 @@
     <ClInclude Include="Triangle.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Arc.cpp" />
     <ClCompile Include="DelaunayMesh2D.cpp" />
     <ClCompile Include="Draw.cpp" />
     <ClCompile Include="Entity.cpp" />

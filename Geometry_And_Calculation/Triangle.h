@@ -1,5 +1,6 @@
 #pragma once
 #include<iostream>
+#include<algorithm>
 #include"Entity.h"
 
 class Triangle : public Entity {
@@ -15,4 +16,6 @@ public:
 	Point2D circum_center;
 	double circum_r;
 	Point2D centroid;
+	double R_L_min;
+	bool is_inside_polygon = true;
 };

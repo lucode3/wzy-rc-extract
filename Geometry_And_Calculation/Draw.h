@@ -42,6 +42,7 @@ public:
 	void plot_triangle(Triangle& triangle);
 	void plot_point(Point2D& p);
 	void plot_segment(Segment& s);
+	void plot_cir(Point2D& center, double r);
 	void plot_show();
 public:
 	int window_x_begin;

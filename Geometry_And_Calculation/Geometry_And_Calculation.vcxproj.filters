@@ -65,6 +65,9 @@
     <ClInclude Include="FindUnionSet.h">
       <Filter>include\delaunay_mesh</Filter>
     </ClInclude>
+    <ClInclude Include="Arc.h">
+      <Filter>include\delaunay_mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -93,6 +96,9 @@
     </ClCompile>
     <ClCompile Include="Draw.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="Arc.cpp">
+      <Filter>source\delaunay_mesh</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

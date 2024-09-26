@@ -90,30 +90,38 @@ int main() {
 	DelaunayMesh2D mesh(0, 10, 0, 10);
 
 	mesh.contraint_normalize(cps, css);
-
+	mesh.initial();
 	//########### contraint_normalize result ###########
-	for (auto it = mesh.constraint_segments.begin(); it != mesh.constraint_segments.end(); it++) {
-		mesh.drawer->plot_segment(it->second);
-	}
-	for (auto it = mesh.constraint_points.begin(); it != mesh.constraint_points.end(); it++) {
-		mesh.drawer->plot_point(it->second);
-	}
-	mesh.drawer->plot_show();
-
-
-	mesh.boundary_subdivision();
-
-	//########### boundary_subdivision result ###########
-	mesh.drawer->plot_triangles(mesh.triangles, "k-");
-	for (auto it : mesh.css) {
-		if (mesh.es_segments.find(it) == mesh.es_segments.end()) {
-			mesh.drawer->plot_segment(it);
-		}
-	}
+	//for (auto it = mesh.constraint_segments.begin(); it != mesh.constraint_segments.end(); it++) {
+	//	mesh.drawer->plot_segment(it->second);
+	//}
 	//for (auto it = mesh.constraint_points.begin(); it != mesh.constraint_points.end(); it++) {
 	//	mesh.drawer->plot_point(it->second);
 	//}
-	mesh.drawer->plot_show();
+	//for (auto it : mesh.arcs) {
+	//	mesh.drawer->plot_point(it.M);
+	//	mesh.drawer->plot_cir(it.M, it.r);
+	//}
+	//mesh.drawer->plot_show();
+	//########### contraint_normalize result ###########
+
+	mesh.boundary_subdivision(0);
+	mesh.q_max = 1.0;
+	mesh.quality_control_by_qmax();
+	mesh.boundary_subdivision(1);
+
+	//########### boundary_subdivision result ###########
+	//mesh.drawer->plot_triangles(mesh.triangles, "k-");
+	//for (auto it : mesh.css) {
+	//	if (mesh.es_segments.find(it) == mesh.es_segments.end()) {
+	//		mesh.drawer->plot_segment(it);
+	//	}
+	//}
+	//for (auto it = mesh.constraint_points.begin(); it != mesh.constraint_points.end(); it++) {
+	//	mesh.drawer->plot_point(it->second);
+	//}
+
+	//mesh.drawer->plot_show();
 
 
 

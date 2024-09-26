@@ -32,6 +32,15 @@ bool Point2D::operator==(const Point2D& other) const {
 	}
 }
 
+bool Point2D::operator!=(const Point2D& other) const {
+	if (x != other.x || y != other.y) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 bool Point2D::operator<(const Point2D& other) const {
 	if (x == other.x) {
 		return y < other.y; // 如果 x 相等，则比较 y

@@ -61,7 +61,7 @@ void Draw::plot_segment(Segment& s) {
 	double x2 = s.p2.x;
 	double y2 = s.p2.y;
 	// 绘制每条线段
-	plt::plot({ x1, x2 }, { y1, y2 }, "b-"); 
+	plt::plot({ x1, x2 }, { y1, y2 }, "r-"); 
 }
 
 void Draw::plot_triangle(Triangle& triangle) {
@@ -83,6 +83,26 @@ void Draw::plot_triangle(Triangle& triangle) {
 	plt::plot(x3, y3, "g-");
 	
 }
+
+void Draw::plot_cir(Point2D& center, double r) {
+	double centerX = center.x;
+	double centerY = center.y;
+	double radius = r;
+
+	// 生成圆的点
+	int num_points = 200; // 圆上点的数量
+	std::vector<double> x(num_points);
+	std::vector<double> y(num_points);
+
+	for (int i = 0; i < num_points; ++i) {
+		double theta = 2 * 3.141592653589793 * i / num_points; // 角度
+		x[i] = centerX + radius * cos(theta);
+		y[i] = centerY + radius * sin(theta);
+	}
+	// 绘制圆
+	plt::plot(x, y, "g-"); // "b-" 表示蓝色线
+}
+
 void Draw::plot_show() {
 	//// 设置图的范围（可选）
 	//plt::xlim(this->window_x_begin, this->window_x_end);  // 设置 x 轴范围

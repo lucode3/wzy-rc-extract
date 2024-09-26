@@ -1,7 +1,7 @@
 #include"Triangle.h"
 
 Triangle::Triangle() {
-	std::cout << "Triangle::Triangle()\n";
+
 }
 
 Triangle& Triangle::operator=(const Triangle& other) {
@@ -29,9 +29,6 @@ Triangle::Triangle(long id, Point2D p1, Point2D p2, Point2D p3) : Entity(id) {
 
 	//极端情况，三个点是共线的，此时设该特殊"三角形"的外接圆是圆心为原点且半径无穷大，这样使得后续它一定会被空洞算法合并掉
 	if (D == 0) {
-		this->circum_center.x = 0.0;
-		this->circum_center.y = 0.0;
-		this->circum_r = 1e20;
 		return;
 	}
 	// 计算圆心的坐标（center.x, center.y）
@@ -50,6 +47,7 @@ Triangle::Triangle(long id, Point2D p1, Point2D p2, Point2D p3) : Entity(id) {
 	this->centroid.x = (p1.x + p2.x + p3.x) / 3.0;
 	this->centroid.y = (p1.y + p2.y + p3.y) / 3.0;
 	
+	this->R_L_min = circum_r / std::min(std::min(a, b), c);
 }
 
 

@@ -8,6 +8,57 @@ DelaunayMesh2D::~DelaunayMesh2D() {
 	delete drawer;
 }
 
+double points_dis(Point2D& A, Point2D& B) {
+	return std::sqrt(std::pow(A.x - B.x, 2) + std::pow(A.y - B.y, 2));
+}
+
+// 计算凸包
+void DelaunayMesh2D::convexHull() {
+	for (auto it : this->constraint_points) {
+		polygon.push_back(it.second);
+	}
+	int n = polygon.size();
+	if (n <= 1) {
+		return;
+	}
+	std::sort(polygon.begin(), polygon.end());
+	std::vector<Point2D> hull;
+
+	// 下半部分
+	for (const auto& p : polygon) {
+		while (hull.size() >= 2 && cross(hull[hull.size() - 2], hull.back(), p) <= 0) {
+			hull.pop_back();
+		}
+		hull.push_back(p);
+	}
+
+	// 上半部分
+	size_t t = hull.size() + 1;
+	for (int i = n - 1; i >= 0; i--) {
+		while (hull.size() >= t && cross(hull[hull.size() - 2], hull.back(), polygon[i]) <= 0) {
+			hull.pop_back();
+		}
+		hull.push_back(polygon[i]);
+	}
+
+	hull.pop_back(); // 去掉最后一个点，因为它是第一个点
+	polygon = hull;
+}
+
+// 判断点是否在多边形内
+bool DelaunayMesh2D::isInsidePolygon(Point2D& p) {
+	int count = 0, n = polygon.size();
+	for (int i = 0; i < n; i++) {
+		int next = (i + 1) % n;
+		// 判断射线与边的交点
+		if ((polygon[i].y > p.y) != (polygon[next].y > p.y) &&
+			(p.x < (polygon[next].x - polygon[i].x) * (p.y - polygon[i].y) / (polygon[next].y - polygon[i].y) + polygon[i].x)) {
+			count++;
+		}
+	}
+	return count % 2 == 1; // 奇数交点则在内部
+}
+
 //计算AB与AC的叉积，从而判断C与AB的位置关系
 double DelaunayMesh2D::cross(const Point2D& a, const Point2D& b, const Point2D& c) {
 	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
@@ -309,7 +360,7 @@ void DelaunayMesh2D::contraint_normalize(std::vector<std::vector<double>>& cps, 
 	}
 
 	this->css = segments;
-	
+	convexHull();
 }
 
 double DelaunayMesh2D::local_feature_size(Point2D& CP, std::unordered_set<Point2D>& points, std::unordered_set<Segment>& segments) {
@@ -381,6 +432,7 @@ void DelaunayMesh2D::control_circle_segmentation(std::unordered_set<Point2D>& po
 		if (segmentaion) {
 			double lfs = local_feature_size(A, points, segments);
 			lfs /= 3.1;
+			std::vector<Point2D> cir_points;
 			for (int i = 0; i < it->second.size(); i++) {
 				Segment BC = it->second[i];
 				Point2D other;
@@ -388,15 +440,15 @@ void DelaunayMesh2D::control_circle_segmentation(std::unordered_set<Point2D>& po
 					other = BC.p2;
 				else
 					other = BC.p1;
-
 				Point2D intersection = find_line_circle_intersection(A, other, lfs);
-
+				intersection.id = i;
 				Segment B_intersection(BC.p1, intersection);
 				Segment C_intersection(BC.p2, intersection);
 				segments.erase(BC);
 				segments.insert(B_intersection);
 				segments.insert(C_intersection);
 				points.insert(intersection);
+				cir_points.push_back(intersection);
 				for (int i = 0; i < relative_segments[other].size(); i++) {
 					if (BC == relative_segments[other][i]) {
 						Segment other_intersection(other, intersection);
@@ -404,6 +456,13 @@ void DelaunayMesh2D::control_circle_segmentation(std::unordered_set<Point2D>& po
 						break;
 					}
 				}
+			}
+			sort_cavity_points(cir_points, A);
+			Arc control_cir(cir_points[0], cir_points[1], A);
+			this->control_cirs.push_back(control_cir);
+			for (int i = 0; i < cir_points.size(); i++) {
+				Arc arc(cir_points[i], cir_points[(i + 1) % cir_points.size()], A);
+				this->arcs.insert(arc);
 			}
 		}
 	}
@@ -442,6 +501,8 @@ long DelaunayMesh2D::get_es_triangle(Segment& s, long cur) {
 
 //实现删除一个三角形的功能，同步triangles和es_segment的相关处理
 void DelaunayMesh2D::del_triangle(Triangle& t) {
+	if (this->triangles.find(t.id) == this->triangles.end())
+		return;
 	this->triangles.erase(t.id);
 	Segment s1(t.p1, t.p2);
 	Segment s2(t.p2, t.p3);
@@ -489,6 +550,9 @@ void DelaunayMesh2D::del_triangle(Triangle& t) {
 
 //实现新增一个三角形的功能，同步triangles和es_segment的相关处理
 void DelaunayMesh2D::add_triangle(Triangle& t) {
+	if (this->doing_quality_control && !external_triangle(t) && !in_control_cirs(t) && t.R_L_min > this->q_max)
+		this->bad_triangles.push(t);
+	t.is_inside_polygon = this->isInsidePolygon(t.circum_center);
 	this->triangles.insert({ this->triangle_id_count, t });
 	Segment s1(t.p1, t.p2);
 	Segment s2(t.p2, t.p3);
@@ -521,6 +585,7 @@ std::vector<Triangle> DelaunayMesh2D::get_cavity_triangles(Point2D& point) {
 	long triangle_id = search_triangle_by_distance(point);
 	Triangle cur_tri = triangles[triangle_id];
 	std::vector<Triangle> cavity_triangles;
+
 	cavity_triangles.push_back(cur_tri);
 	Segment s1(cur_tri.p1, cur_tri.p2);
 	Segment s2(cur_tri.p2, cur_tri.p3);
@@ -611,7 +676,7 @@ long DelaunayMesh2D::search_triangle(Point2D& point) {
 }
 
 void DelaunayMesh2D::sort_cavity_points(std::vector<Point2D>& cavity_points, Point2D& center) {
-	std::unordered_map<long, double> angle_map;
+	std::unordered_map<Point2D, double> angle_map;
 	for (auto& p : cavity_points) {
 		double deltaX = p.x - center.x;
 		double deltaY = p.y - center.y;
@@ -622,19 +687,21 @@ void DelaunayMesh2D::sort_cavity_points(std::vector<Point2D>& cavity_points, Poi
 		if (angle < 0) {
 			angle += 360.0;
 		}
-		angle_map.insert({ p.id, angle });
+		angle_map.insert({ p, angle });
 	}
 	std::sort(cavity_points.begin(), cavity_points.end(), [&angle_map](const Point2D& a, const Point2D& b) {
-		return angle_map[a.id] < angle_map[b.id];
+		return angle_map[a] < angle_map[b];
 	});
+
 }
 
-void DelaunayMesh2D::cavity(Point2D& point) {
+void DelaunayMesh2D::cavity(Point2D& point, int mod) {
 	std::vector<Triangle> cavity_triangles = get_cavity_triangles(point);
 
 	for (auto& t : cavity_triangles) {
 		del_triangle(t);
 	}
+
 	std::unordered_set<Point2D> alreay_exsit;
 	std::vector<Point2D> cavity_points;
 	for (auto& tri : cavity_triangles) {
@@ -665,15 +732,16 @@ void DelaunayMesh2D::cavity(Point2D& point) {
 	}
 }
 
-Triangle DelaunayMesh2D::add_init_Triangle() {
+void DelaunayMesh2D::initial() {
 	Point2D p1(this->point_id_count, -10, -1.0);
 	this->point_id_count += 1;
 	Point2D p2(this->point_id_count, 0.0, 10);
 	this->point_id_count += 1;
 	Point2D p3(this->point_id_count, 10.0, -1.0);
 	this->point_id_count += 1;
-	Triangle init_triangle(triangle_id_count, p1, p2, p3);
-	this->triangles.insert({ this->triangle_id_count, init_triangle });
+	Triangle init(triangle_id_count, p1, p2, p3);
+	this->init_triangle = init;
+	this->triangles.insert({ this->triangle_id_count, init });
 	Segment s1(p1, p2);
 	Segment s2(p2, p3);
 	Segment s3(p3, p1);
@@ -682,17 +750,14 @@ Triangle DelaunayMesh2D::add_init_Triangle() {
 	this->es_segments.insert({ s3, {this->triangle_id_count} });
 
 	triangle_id_count += 1;
-	return init_triangle;
+	for (auto it = this->constraint_points.begin(); it != this->constraint_points.end(); it++) {
+		cavity(it->second,0);
+	}
+
 }
 
 
-void DelaunayMesh2D::boundary_subdivision() {
-	add_init_Triangle();
-
-	for (auto it = this->constraint_points.begin(); it != this->constraint_points.end(); it++) {
-		cavity(it->second);
-	}
-
+void DelaunayMesh2D::boundary_subdivision(int mod) {
 	for (auto& s : this->css) {
 		if (this->es_segments.find(s) == this->es_segments.end())
 			this->subdivide_segments.push(s);
@@ -706,18 +771,208 @@ void DelaunayMesh2D::boundary_subdivision() {
 		Point2D A = cur.p1;
 		Point2D B = cur.p2;
 		Point2D mid_point(this->point_id_count,(B.x + A.x) / 2, (B.y + A.y) / 2);
+
+		long triangle_id = search_triangle_by_distance(mid_point);
+		Triangle cur_tri = triangles[triangle_id];
+		if (mid_point == cur_tri.p1 || mid_point == cur_tri.p2 || mid_point == cur_tri.p3) {
+			continue;
+		}
+
 		this->constraint_points.insert({ this->point_id_count , mid_point });
 		this->point_id_count += 1;
 
-		cavity(mid_point);
-
-		this->css.erase(cur);
-		Segment s1(A, mid_point);
-		Segment s2(B, mid_point);
-		this->subdivide_segments.push(s1);
-		this->subdivide_segments.push(s2);
-		this->css.insert(s1);
-		this->css.insert(s2);
+		cavity(mid_point,mod);
+		if (this->css.count(cur) != 0) {
+			this->css.erase(cur);
+			Segment s1(A, mid_point);
+			Segment s2(B, mid_point);
+			this->subdivide_segments.push(s1);
+			this->subdivide_segments.push(s2);
+			this->css.insert(s1);
+			this->css.insert(s2);
+		}
 	}	
 }
+
+
+bool isPointOnSegment(Point2D A, Point2D B, Point2D P) {
+	// 计算向量 AP 和 AB 的叉积
+	double crossProduct = (P.x - A.x) * (B.y - A.y) - (P.y - A.y) * (B.x - A.x);
+
+	// 判断共线性
+	if (crossProduct != 0) {
+		return false; // 不在同一条直线上
+	}
+
+	// 检查点 P 是否在段 AB 内
+	if (std::min(A.x, B.x) <= P.x && P.x <= std::max(A.x, B.x) &&
+		std::min(A.y, B.y) <= P.y && P.y <= std::max(A.y, B.y)) {
+		return true; // 在段内
+	}
+
+	return false; // 不在段内
+}
+
+
+void DelaunayMesh2D::insert_point(Triangle& t) {
+	Point2D p = t.circum_center;
+	bool flag = t.is_inside_polygon;
+	for (auto pair : this->es_segments) {
+		Segment s = pair.first;
+		if (external_edge(s))
+			continue;
+		if (points_dis(p, s.M) < s.r) {
+			cavity(s.M,0);
+			this->constraint_points.insert({ this->point_id_count , s.M });
+			this->point_id_count += 1;
+
+			if (this->css.count(s) != 0) {
+				this->css.erase(s);
+				Segment s1(s.p1, s.M);
+				Segment s2(s.p2, s.M);
+				this->css.insert(s1);
+				this->css.insert(s2);
+			}
+			return;
+		}
+	}
+
+	for (auto arc : this->arcs) {
+		if (points_dis(p, arc.M) < arc.r) {
+			this->drawer->plot_point(arc.M);
+			this->drawer->plot_cir(arc.M, arc.r);
+			cavity(arc.M,0);
+			this->constraint_points.insert({ this->point_id_count , arc.M });
+			this->point_id_count += 1;
+			this->arcs.erase(arc);
+			Arc a1(arc.A, arc.M, arc.O);
+			Arc a2(arc.M, arc.B, arc.O);
+			this->arcs.insert(a1);
+			this->arcs.insert(a2);
+			return;
+		}
+	}
+	if (flag) {
+		cavity(p,0);
+		//for (auto it : this->css) {
+		//	if (isPointOnSegment(it.p1, it.p2, p)) {
+		//		std::cout << " isPointOnSegment(it.p1, it.p2, p)\n";
+		//	}
+		//}
+	}
+	else {
+		Segment s1(t.p1, t.p2);
+		Segment s2(t.p2, t.p3);
+		Segment s3(t.p3, t.p1);
+		if (s1.r > s2.r && s1.r > s3.r) {
+			cavity(s1.M,0);
+			this->constraint_points.insert({ this->point_id_count , s1.M });
+			this->point_id_count += 1;
+
+			if (this->css.count(s1) != 0) {
+				this->css.erase(s1);
+				Segment a(s1.p1, s1.M);
+				Segment b(s1.p2, s1.M);
+				this->css.insert(a);
+				this->css.insert(b);
+			}
+			
+		}
+		else if (s2.r > s1.r && s2.r > s3.r) {
+			cavity(s2.M,0);
+			this->constraint_points.insert({ this->point_id_count , s2.M });
+			this->point_id_count += 1;
+
+			if (this->css.count(s2) != 0) {
+				this->css.erase(s2);
+				Segment a(s2.p1, s2.M);
+				Segment b(s2.p2, s2.M);
+				this->css.insert(a);
+				this->css.insert(b);
+			}
+		}
+		else {
+			cavity(s3.M,0);
+			this->constraint_points.insert({ this->point_id_count , s3.M });
+			this->point_id_count += 1;
+
+			if (this->css.count(s3) != 0) {
+				this->css.erase(s3);
+				Segment a(s3.p1, s3.M);
+				Segment b(s3.p2, s3.M);
+				this->css.insert(a);
+				this->css.insert(b);
+			}
+		}
+
+	}
+	
+
+}
+
+bool DelaunayMesh2D::in_control_cirs(Triangle& t) {
+	bool is_in_control_cirs = false;
+	for (auto cir : this->control_cirs) {
+		double cir_r = points_dis(cir.A, cir.O);
+		if (cir_r - points_dis(t.p1, cir.O) >= -1e-30 && cir_r - points_dis(t.p2, cir.O) >= -1e-30 && cir_r - points_dis(t.p3, cir.O) >= -1e-30)
+			is_in_control_cirs = true;
+	}
+	return is_in_control_cirs;
+}
+
+bool DelaunayMesh2D::external_triangle(Triangle& t) {
+	if (t.p1 == this->init_triangle.p1 || t.p1 == this->init_triangle.p2 || t.p1 == this->init_triangle.p3) {
+		return true;
+	}
+	if (t.p2 == this->init_triangle.p1 || t.p2 == this->init_triangle.p2 || t.p2 == this->init_triangle.p3) {
+		return true;
+	}
+	if (t.p3 == this->init_triangle.p1 || t.p3 == this->init_triangle.p2 || t.p3 == this->init_triangle.p3) {
+		return true;
+	}
+	return false;
+}
+
+bool DelaunayMesh2D::external_edge(Segment& s) {
+	if (s.p1 == this->init_triangle.p1 || s.p1 == this->init_triangle.p2 || s.p1 == this->init_triangle.p3) {
+		return true;
+	}
+	if (s.p2 == this->init_triangle.p1 || s.p2 == this->init_triangle.p2 || s.p2 == this->init_triangle.p3) {
+		return true;
+	}
+
+	return false;
+}
+
+void DelaunayMesh2D::quality_control_by_qmax() {
+	this->doing_quality_control = true;
+	for (auto pair : this->triangles) {
+		Triangle t = pair.second;
+		if (external_triangle(t))
+			continue;
+		if (!in_control_cirs(t) && t.R_L_min > this->q_max) {
+			this->bad_triangles.push(t);
+		}
+	}
+
+	int max_iteration = 200;
+	while (!this->bad_triangles.empty() && max_iteration >= 0) {
+		Triangle t = this->bad_triangles.front();
+		this->bad_triangles.pop();
+
+		if (this->triangles.find(t.id) == this->triangles.end())
+			continue;
+		try {
+			insert_point(t);
+		}
+		catch (const std::invalid_argument& e) {
+			this->doing_quality_control = false;
+			return;
+		}
+		max_iteration--;
+	}
+	this->doing_quality_control = false;
+
+}
+
 
